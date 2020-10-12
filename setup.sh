@@ -222,8 +222,6 @@ installDaemon() {
 }
 installSnetCli() {
 
-         python3 -m venv env
-         source env/bin/activate
          pip3 install snet-cli
 }
 
@@ -234,6 +232,9 @@ checkAndInstall() {
  WITH_SUDO=$([ "$EUID" != 0 ] && echo "sudo" || echo "")
  $WITH_SUDO apt-get update
  $WITH_SUDO apt-get install curl net-tools netcat unzip zip bzip2 gnupg curl wget python3 python3-pip python3-dev python3-venv libudev-dev libusb-1.0-0-dev vim -y;
+
+ python3 -m venv env
+ source env/bin/activate
  snet version || { installSnetCli; }
  snetd version || { installDaemon; }
 
