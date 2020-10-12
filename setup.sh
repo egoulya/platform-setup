@@ -221,6 +221,9 @@ installDaemon() {
 
 }
 installSnetCli() {
+
+         python3 -m venv env
+         source env/bin/activate
          pip3 install snet-cli
 }
 
@@ -234,11 +237,6 @@ checkAndInstall() {
  snet version || { installSnetCli; }
  snetd version || { installDaemon; }
 
-cat > snet-installation.txt << EOF
-{
- installed curl net-tools netcat unzip zip bzip2 gnupg curl wget python3 python3-pip python3-dev netstat libudev-dev libusb-1.0-0-dev vim snet snetd
-}
-EOF
 }
 
 identitySetUp() {
@@ -292,10 +290,8 @@ echo -e "${blue}\t 2. User should have root privileges."
 echo -e "${green}"
 
 echo -e "${blue}Checking for Dependencies and Installing ... ${grey}"
+checkAndInstall
 
-cat snet-installation.txt || { checkAndInstall; }
-python3 -m venv env
-source env/bin/activate
 echo -e "${blue}Would you like to setup an ETCD cluster with a single node y/n ?:${grey}"
 read clusterETCDSetup
 
