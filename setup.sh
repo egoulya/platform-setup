@@ -200,7 +200,7 @@ get_gitrepo() {
         cd ..
     fi
     cd example-service
-    #pip3 install -r requirements.txt
+    pip3 install -r requirements.txt
     chmod 777 buildproto.sh
     ./buildproto.sh
     nohup python3 run_example_service.py --no-daemon &
