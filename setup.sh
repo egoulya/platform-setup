@@ -224,8 +224,8 @@ installDaemon() {
 checkAndInstall() {
  echo -e "${green}\n Installing Dependencies!!!."
  WITH_SUDO=$([ "$EUID" != 0 ] && echo "sudo" || echo "")
- # $WITH_SUDO apt-get update
- # $WITH_SUDO apt-get install curl net-tools netcat unzip zip bzip2 gnupg curl wget python3 python3-pip python3-dev libudev-dev libusb-1.0-0-dev vim -y;
+ $WITH_SUDO apt-get update
+ $WITH_SUDO apt-get install curl net-tools netcat unzip zip bzip2 gnupg curl wget python3 python3-pip python3-dev libudev-dev libusb-1.0-0-dev vim -y;
  snet version || { pip3 install snet-cli; }
  snetd version || { installDaemon; }
 
