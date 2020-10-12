@@ -244,6 +244,25 @@ cat > snet-installation.txt << EOF
 EOF
 }
 
+identitySetUp() {
+snet identity list
+if [[  $? != 0  ]];
+then
+    echo -e "${blue}Please enter a MNEMONIC to create an account that will be used for all block chain operations:${grey}"
+    read mnemonic
+    echo -e "${blue}Please enter a name to identity/account:${grey}"
+    read identityname
+    snet identity create --mnemonic $mnemonic --network ropsten $identityname mnemonic
+    snet identity $identityname
+    walletAddress=`snet account print`;
+    echo "$walletAddress">req.json
+    curl -X POST -H "Content-Type: application/json" -d @req.json https://faucet.metamask.io
+else  echo -e "${blue}\nEnter the identity name to switch over ${grey}";
+      read identityname
+      snet identity $identityname
+fi
+
+}
 
 printErrorAndExit() {
  if [ "$?" -ne 0 ];
@@ -288,22 +307,7 @@ then
     echo "Please note your etcd client end point will be on port 2379 , http://localhost:2379"
 fi
 
-snet identity list
-if [[ $(ls -A) ]];
-then
-    echo -e "${blue}Please enter a MNEMONIC to create an account that will be used for all block chain operations:${grey}"
-    read mnemonic
-    echo -e "${blue}Please enter a name to identity/account:${grey}"
-    read identityname
-    snet identity create --mnemonic $mnemonic --network ropsten $identityname mnemonic
-    snet identity $identityname
-    walletAddress=`snet account print`;
-    echo "$walletAddress">req.json
-    curl -X POST -H "Content-Type: application/json" -d @req.json https://faucet.metamask.io
-else  echo -e "${blue}\nEnter the identity name to switch over ${grey}";
-      read identityname
-      snet identity $identityname
-fi
+identitySetUp
 
 
 walletAddress=`snet account print`;
