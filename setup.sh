@@ -246,7 +246,7 @@ EOF
 
 identitySetUp() {
 snet identity list
-if [[  $? != 0  ]];
+if [[ $(snet identity list | head -c1 | wc -c) -eq 0 ]];
 then
     echo -e "${blue}Please enter a MNEMONIC to create an account that will be used for all block chain operations:${grey}"
     read mnemonic
@@ -258,6 +258,7 @@ then
     echo "$walletAddress">req.json
     curl -X POST -H "Content-Type: application/json" -d @req.json https://faucet.metamask.io
 else  echo -e "${blue}\nEnter the identity name to switch over ${grey}";
+      snet identity list
       read identityname
       snet identity $identityname
 fi
