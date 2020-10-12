@@ -258,6 +258,14 @@ else  echo -e "${blue}\nEnter the identity name to switch over ${grey}";
       snet identity list
       read identityname
       snet identity $identityname
+      walletAddress=`snet account print`;
+      echo "Wallet address is $walletAddress"
+      snet account balance
+      if [[ $( snet account balance |grep "ETH"|tr -d "ETH: ") == "0" ]];
+      then
+         echo -e "${red}Please add Ether on to you address from ether Faucet in Ropsten at https://faucet.ropsten.be/ for your address: $walletAddress "
+         exit
+      fi
 fi
 
 }
@@ -307,9 +315,6 @@ fi
 identitySetUp
 
 
-walletAddress=`snet account print`;
-echo "Wallet address is $walletAddress"
-snet account balance
 echo -e "${blue}Please enter your organization id:${grey}"
 read orgID
 organizationDeployment
