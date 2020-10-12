@@ -221,9 +221,6 @@ installDaemon() {
 
 }
 installSnetCli() {
-         sudo apt-get install python3-venv
-         python3 -m venv env
-         source env/bin/activate
          pip3 install snet-cli
 }
 
@@ -233,7 +230,7 @@ checkAndInstall() {
  echo -e "${green}\n Installing Dependencies!!!."
  WITH_SUDO=$([ "$EUID" != 0 ] && echo "sudo" || echo "")
  $WITH_SUDO apt-get update
- $WITH_SUDO apt-get install curl net-tools netcat unzip zip bzip2 gnupg curl wget python3 python3-pip python3-dev libudev-dev libusb-1.0-0-dev vim -y;
+ $WITH_SUDO apt-get install curl net-tools netcat unzip zip bzip2 gnupg curl wget python3 python3-pip python3-dev python3-venv libudev-dev libusb-1.0-0-dev vim -y;
  snet version || { installSnetCli; }
  snetd version || { installDaemon; }
 
@@ -245,6 +242,7 @@ EOF
 }
 
 identitySetUp() {
+
 snet identity list
 if [[ $(snet identity list | head -c1 | wc -c) -eq 0 ]];
 then
@@ -296,7 +294,8 @@ echo -e "${green}"
 echo -e "${blue}Checking for Dependencies and Installing ... ${grey}"
 
 cat snet-installation.txt || { checkAndInstall; }
-
+python3 -m venv env
+source env/bin/activate
 echo -e "${blue}Would you like to setup an ETCD cluster with a single node y/n ?:${grey}"
 read clusterETCDSetup
 
