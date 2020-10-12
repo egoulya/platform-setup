@@ -1,0 +1,10 @@
+sudo docker build . -t myubuntu
+sudo docker run -d --rm -u ubuntu --name myubuntu -v /home/adminuser/singnet/src/github.com/singnet/snet-daemon:/home/circleci myubuntu top -b
+
+
+# to get into docker
+sudo docker exec -it myubuntu bash
+
+
+# at the end of the work
+sudo docker stop myubuntu
