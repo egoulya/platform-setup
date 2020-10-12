@@ -6,7 +6,7 @@ RUN apt-get update && \
     apt-get install -y \
     git mercurial xvfb \
     locales sudo openssh-client ca-certificates tar gzip parallel \
-    net-tools netcat unzip zip bzip2 gnupg curl wget python3 python3-pip python3-dev netstat libudev-dev libusb-1.0-0-dev vim
+    net-tools netcat unzip zip bzip2 gnupg curl wget python3 python3-pip python3-dev libudev-dev libusb-1.0-0-dev vim
 
 RUN ln -sf /usr/share/zoneinfo/Etc/UTC /etc/localtime
 

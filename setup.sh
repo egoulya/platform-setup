@@ -267,8 +267,8 @@ echo -e "${green}"
 
 echo -e "${blue}Checking for Dependencies and Installing ... ${grey}"
 
-# cat snet-installation.txt || { checkAndInstallation; }
-checkAndInstall
+cat snet-installation.txt || { checkAndInstall; }
+
 echo -e "${blue}Would you like to setup an ETCD cluster with a single node y/n ?:${grey}"
 read clusterETCDSetup
 
