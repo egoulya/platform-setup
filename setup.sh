@@ -63,8 +63,8 @@ echo `pwd`
 echo -e "${blue}Please enter your service id:${grey}"
 read serviceID
 
-       echo -e "${blue}Please enter your daemon port:${grey}"
-        read daemonPort
+echo -e "${blue}Please enter your daemon port:${grey}"
+read daemonPort
 
  #need to handle when the serviceID is same as orgID
     if [  ! -z "$(snet organization list-services $orgID | grep "$serviceID")" ];
@@ -174,12 +174,13 @@ EOF
 
   echo -e "${green}\nStarting Daemon.....:${grey}"
   nohup snetd --config $orgID.$serviceID.snetd.config.json &
-  ps aux |grep $daemonPort
-  if [ "$?" -ne 0 ];
+  pid=$!
+  if [[ $(ps -ef |grep $daemonPort | head -c1 | wc -c) -eq 0 ]];
   then
-   echo -e "${red}\nDaemon Startup Failed, please check the logs:${grey}"
-  else
    echo -e "${green}\nDaemon Successfully Started:${grey}"
+  else
+   echo -e "${red}\nDaemon Startup Failed, please check the file:$orgID.$serviceID.log"
+
  fi
 
 }
@@ -203,7 +204,15 @@ get_gitrepo() {
     chmod 777 buildproto.sh
     ./buildproto.sh
     nohup python3 run_example_service.py --no-daemon &
-    echo -e "${green}Started Example Service on port 7003!!!"
+      if [[ $(ps -ef |grep "7003" | head -c1 | wc -c) -eq 0 ]];
+       then
+       echo -e "${red}\nService Startup Failed, please check errors from the command 'python3 run_example_service.py --no-daemon'"
+      else
+       echo -e "${green}Started Example Service on port 7003!!!"
+      fi
+
+
+
     protopath="example-service/service/service_spec"
     cd ..
 }
@@ -264,7 +273,7 @@ else  echo -e "${blue}\nEnter the identity name to switch over ${grey}";
       if [[ $( snet account balance |grep "ETH"|tr -d "ETH: ") == "0" ]];
       then
          echo -e "${red}Please add Ether on to you address from ether Faucet in Ropsten at https://faucet.ropsten.be/ for your address: $walletAddress "
-         exit
+
       fi
 fi
 
