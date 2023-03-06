@@ -59,7 +59,8 @@ export PATH=$PATH:~/bin
 
 cert_folder="/var/lib/etcd/cfssl"
 sudo mkdir -p ${cert_folder}
-sudo chmod 777 -R ${cert_folder}
+sudo chown -R ${cur_user} ${cert_folder}
+sudo chmod 755 -R ${cert_folder}
 cd ${cert_folder}
 echo "{
     \"signing\": {
