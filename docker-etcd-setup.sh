@@ -73,7 +73,8 @@ echo "{
                 \"usages\": [
                     \"signing\",
                     \"key encipherment\",
-                    \"server auth\"
+                    \"server auth\",
+                    \"client auth\"
                 ]
             },
             \"client\": {
@@ -124,8 +125,8 @@ echo "{
         \"127.0.0.1\"
     ],
     \"key\": {
-        \"algo\": \"ecdsa\",
-        \"size\": 256
+        \"algo\": \"rsa\",
+        \"size\": 2048
     },
     \"names\": [
         {
@@ -146,8 +147,8 @@ echo "{
       \"127.0.0.1\"
     ],
     \"key\": {
-        \"algo\": \"ecdsa\",
-        \"size\": 256
+        \"algo\": \"rsa\",
+        \"size\": 2048
     },
     \"names\": [
         {
@@ -163,8 +164,8 @@ echo "{
     \"CN\": \"client\",
     \"hosts\": [\"\"],
     \"key\": {
-        \"algo\": \"ecdsa\",
-        \"size\": 256
+        \"algo\": \"rsa\",
+        \"size\": 2048
     },
     \"names\": [
         {
@@ -177,8 +178,10 @@ echo "{
 cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client client.json | cfssljson -bare client
 
 cd ${current_path}
+mkdir etcd_data
+data_folder=$current_path"/etcd_data"
 
-echo "sudo -u $cur_user docker run -d --network host --restart on-failure --name docker-etcd-node-1 -v data:/data.etcd -v ${cert_folder}:/certs -d quay.io/coreos/etcd:v3.5.0 etcd --name=node-1 --data-dir=data.etcd --initial-advertise-peer-urls https://${private_ip}:2380 --listen-peer-urls https://${private_ip}:2380 --listen-client-urls https://${private_ip}:2379,https://127.0.0.1:2379 --advertise-client-urls https://${private_ip}:2379 --initial-cluster node-1=https://${private_ip}:2380 --initial-cluster-state=new --initial-cluster-token=etcd-cluster-1 --client-cert-auth --trusted-ca-file=/certs/ca.pem --cert-file=/certs/server.pem --key-file=/certs/server-key.pem --peer-client-cert-auth --peer-trusted-ca-file=/certs/ca.pem --peer-cert-file=/certs/member-1.pem --peer-key-file=/certs/member-1-key.pem" > create_etcd_node.sh
+echo "sudo -u $cur_user docker run -d --network host --restart on-failure --name docker-etcd-node-1 -v ${data_folder}:/data.etcd -v ${cert_folder}:/certs -d quay.io/coreos/etcd:v3.5.0 etcd --name=node-1 --data-dir=data.etcd --initial-advertise-peer-urls https://${private_ip}:2380 --listen-peer-urls https://${private_ip}:2380 --listen-client-urls https://${private_ip}:2379,https://127.0.0.1:2379 --advertise-client-urls https://${private_ip}:2379 --initial-cluster node-1=https://${private_ip}:2380 --initial-cluster-state=new --initial-cluster-token=etcd-cluster-1 --client-cert-auth --trusted-ca-file=/certs/ca.pem --cert-file=/certs/server.pem --key-file=/certs/server-key.pem --peer-client-cert-auth --peer-trusted-ca-file=/certs/ca.pem --peer-cert-file=/certs/member-1.pem --peer-key-file=/certs/member-1-key.pem" > create_etcd_node.sh
 
 bash create_etcd_node.sh
 sleep 30
@@ -200,7 +203,8 @@ else
   echo -e "${green}"
   echo -e "<---------- ETCD INSTALLATED SUCCESSFULLY---------->"
   echo -e "${blue} 1. ETCD ENDPOINT: ${grey} https://${private_ip}:2379/health"
-  echo -e "${blue} 2. CERTIFICATES PATH: ${grey} ${cert_folder}"
+  echo -e "${blue} 2.1. CERTIFICATES PATH: ${grey} ${cert_folder}"
+  echo -e "${blue} 2.2. ETCD DATA PATH: ${grey} ${data_folder}"
   echo -e "${blue} 3. COMMAND TO TEST LOCALLY: ${grey} curl --cacert ${cert_folder}/ca.pem --cert ${cert_folder}/client.pem --key ${cert_folder}/client-key.pem https://${private_ip}:2379/health"
   echo -e "${blue} 4. TO START ETCD: ${grey} docker start docker-etcd-node-1"
   echo -e "${blue} 5. TO STOP ETCD: ${grey} docker stop docker-etcd-node-1"
