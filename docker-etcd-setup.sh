@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 
 green="\033[0;32m"
 blue="\033[1;34m"
@@ -181,21 +181,72 @@ cd ${current_path}
 mkdir etcd_data
 data_folder=$current_path"/etcd_data"
 
-echo "sudo -u $cur_user docker run -d --network host --restart on-failure --name docker-etcd-node-1 -v ${data_folder}:/data.etcd -v ${cert_folder}:/certs -d quay.io/coreos/etcd:v3.5.0 etcd --name=node-1 --data-dir=data.etcd --initial-advertise-peer-urls https://${private_ip}:2380 --listen-peer-urls https://${private_ip}:2380 --listen-client-urls https://${private_ip}:2379,https://127.0.0.1:2379 --advertise-client-urls https://${private_ip}:2379 --initial-cluster node-1=https://${private_ip}:2380 --initial-cluster-state=new --initial-cluster-token=etcd-cluster-1 --client-cert-auth --trusted-ca-file=/certs/ca.pem --cert-file=/certs/server.pem --key-file=/certs/server-key.pem --peer-client-cert-auth --peer-trusted-ca-file=/certs/ca.pem --peer-cert-file=/certs/member-1.pem --peer-key-file=/certs/member-1-key.pem" > create_etcd_node.sh
+VERSION=$(curl -s https://api.github.com/repos/singnet/snet-daemon/releases/latest | grep tag_name | cut -d ':' -f 2 | grep -Po "v[0-9]+\.[0-9]+\.[0-9]+")
 
-bash create_etcd_node.sh
+echo "
+services:
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.0
+    ports:
+      - '2379:2379'
+      - '2380:2380'
+    restart: on-failure
+    volumes:
+      - ${data_folder}:/data.etcd
+      - ${cert_folder}:/certs
+    command: >
+      etcd
+      --name=node-1
+      --data-dir=data.etcd
+      --initial-advertise-peer-urls https://${private_ip}:2380
+      --listen-peer-urls https://0.0.0.0:2380
+      --listen-client-urls https://0.0.0.0:2379
+      --advertise-client-urls https://${private_ip}:2379
+      --initial-cluster node-1=https://${private_ip}:2380
+      --initial-cluster-state=new
+      --initial-cluster-token=etcd-cluster-1
+      --client-cert-auth
+      --trusted-ca-file=/certs/ca.pem
+      --cert-file=/certs/server.pem
+      --key-file=/certs/server-key.pem
+      --peer-client-cert-auth
+      --peer-trusted-ca-file=/certs/ca.pem
+      --peer-cert-file=/certs/member-1.pem
+      --peer-key-file=/certs/member-1-key.pem
+  daemon:
+    image: singnet-daemon:latest
+    environment:
+      VERSION: ${version}
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM alpine:latest
+        WORKDIR /workdir
+        RUN apk update && apk upgrade && apk add curl grep python3 py3-pip
+        RUN wget https://github.com/singnet/snet-daemon/releases/download/$VERSION/snetd-linux-amd64-$VERSION -O snetd && chmod +x ./snetd
+        RUN pip install snet.cli --break-system-packages
+        CMD ["./snetd", "-c", "config.json"]
+    volumes:
+      - ${current_path}/daemon-config.json:/workdir/config.json
+    ports:
+      - '8000:8000'
+    restart: on-failure:3
+    command: ./snetd -c config.json
+" > docker-compose.yml
+
+docker compose up -d etcd
+
 sleep 30
-
 curl --cacert ${cert_folder}/ca.pem --cert ${cert_folder}/client.pem --key ${cert_folder}/client-key.pem "https://${private_ip}:2379/health"
 
 if [ "$?" -ne 0 ];
 then
   echo -e "${red}ERROR: Port 2379 & 2380 seems to be not accessible from the host."
   rm -rf ~/bin
-  rm create_etcd_node.sh
+  docker compose down
+  rm docker-compose.yml
   sudo rm -rf ${cert_folder}
-  docker stop docker-etcd-node-1
-  docker rm docker-etcd-node-1
+  sudo rm -rf ${data_folder}
   docker rmi quay.io/coreos/etcd:v3.5.0
   sudo rm /etc/apt/keyrings/docker.gpg
   echo -e "${red}<---------- ETCD INSTALLATION FAILED---------->"
@@ -206,7 +257,9 @@ else
   echo -e "${blue} 2.1. CERTIFICATES PATH: ${grey} ${cert_folder}"
   echo -e "${blue} 2.2. ETCD DATA PATH: ${grey} ${data_folder}"
   echo -e "${blue} 3. COMMAND TO TEST LOCALLY: ${grey} curl --cacert ${cert_folder}/ca.pem --cert ${cert_folder}/client.pem --key ${cert_folder}/client-key.pem https://${private_ip}:2379/health"
-  echo -e "${blue} 4. TO START ETCD: ${grey} docker start docker-etcd-node-1"
-  echo -e "${blue} 5. TO STOP ETCD: ${grey} docker stop docker-etcd-node-1"
-  echo -e "${blue} 6. TO CHECK STATUS/LOGS OF ETCD: ${grey} docker logs docker-etcd-node-1"
+  echo -e "${blue} 4. TO START ETCD: ${grey} docker compose start etcd"
+  echo -e "${blue} 5. TO STOP ETCD: ${grey} docker compose stop etcd"
+  echo -e "${blue} 6. TO CHECK STATUS/LOGS OF ETCD: ${grey} docker compose logs etcd"
+  echo -e "${blue} 7. TO DELETE ETCD: ${grey} docker compose down etcd\n"
+  echo -e "${blue} DAEMON: To start daemon place deamon config file near docker-compose file and run: ${grey} docker compose up -d daemon"
 fi
